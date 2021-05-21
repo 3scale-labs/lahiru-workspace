@@ -1,3 +1,5 @@
 .vscode/
 envoy-rate-limit-header/target/
 mock-backend/node_modules/
+header-to-metadata/add-header-filter/target/
+header-to-metadata/metadata-filter/target/
