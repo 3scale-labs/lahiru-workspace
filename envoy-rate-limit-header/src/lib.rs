@@ -169,9 +169,9 @@ impl HttpContext for RateLimitFilter {
                     self.send_http_response(
                         429,
                         vec![
-                            ("RateLimit-Remaining", &cache.remaining.to_string()),
-                            ("RateLimit-Limit", &cache.limit.to_string()),
-                            ("RateLimit-Reset", &cache.reset),
+                            ("x-3scale-RateLimit-Remaining", &cache.remaining.to_string()),
+                            ("x-3scale-RateLimit-Limit", &cache.limit.to_string()),
+                            ("x-3scale-RateLimit-Reset", &cache.reset),
                         ],
                         None,
                     );
