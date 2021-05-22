@@ -43,22 +43,56 @@ static_resources:
               type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
               value:
                 config:
-                  name: "ratelimit"
-                  root_id: "ratelimit_root"
-                  configuration: 
-                    "@type": type.googleapis.com/google.protobuf.StringValue
-                    value: |
-                      {
-                        "ratelimit_limit": "10",
-                        "ratelimit_remaining": "10",
-                        "ratelimit_reset": "30s"
-                      }
+                  name: "htm"
+                  root_id: "htm_root"
                   vm_config:
                     runtime: "envoy.wasm.runtime.v8"
-                    vm_id: "ratelimit_vm"
+                    vm_id: "htm_vm"
                     code:
                       local:
-                        filename: "/usr/local/bin/envoy_rate_limit_header.wasm"
+                        filename: "/usr/local/bin/add_header_filter.wasm"
+                    configuration: {}
+                    allow_precompiled: true
+          - name: envoy.filters.http.header_to_metadata
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.header_to_metadata.v3.Config
+              request_rules:
+                - header: x-3scale-service-key
+                  on_header_present:
+                    metadata_namespace: 3scale
+                    key: service_key
+                    type: STRING
+                  on_header_missing:
+                    metadata_namespace: 3scale
+                    key: service_key
+                    value: '123456'
+                    type: STRING
+                  remove: false
+                - header: x-3scale-application-key
+                  on_header_present:
+                    metadata_namespace: 3scale
+                    key: application_key
+                    type: STRING
+                  on_header_missing:
+                    metadata_namespace: 3scale
+                    key: application_key
+                    value: '123456'
+                    type: STRING
+                  remove: false
+          - name: envoy.filters.http.wasm
+            typed_config:
+              "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+              type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+              value:
+                config:
+                  name: "htm"
+                  root_id: "htm_root"
+                  vm_config:
+                    runtime: "envoy.wasm.runtime.v8"
+                    vm_id: "htm_vm"
+                    code:
+                      local:
+                        filename: "/usr/local/bin/metadata_filter.wasm"
                     configuration: {}
                     allow_precompiled: true
           - name: envoy.filters.http.router

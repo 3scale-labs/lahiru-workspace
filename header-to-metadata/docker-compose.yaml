@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+  envoy:
+    build:
+      context: ./
+      dockerfile: ./resources/Dockerfile
+    depends_on:
+      - backend_service
+    networks: 
+      - envoymesh
+    ports:
+      - "9095:9095"
+      - "9000:9000"
+
+  backend_service:
+    build:
+      context: ../mock-backend
+      dockerfile: Dockerfile
+    networks:
+      - envoymesh
+
+networks:
+  envoymesh: {}

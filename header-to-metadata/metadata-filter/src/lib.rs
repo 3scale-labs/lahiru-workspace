@@ -1,10 +1,11 @@
-use log::trace;
+use log::info;
 use proxy_wasm::traits::*;
 use proxy_wasm::types::*;
+use std::str;
 
 #[no_mangle]
 pub fn _start() {
-    proxy_wasm::set_log_level(LogLevel::Trace);
+    proxy_wasm::set_log_level(LogLevel::Info);
     proxy_wasm::set_root_context(|_| -> Box<dyn RootContext> { Box::new(MetadataRoot) });
 }
 
@@ -30,20 +31,35 @@ impl Context for MetadataFilter {}
 
 impl HttpContext for MetadataFilter {
     fn on_http_request_headers(&mut self, _: usize) -> Action {
-        // self.add_http_request_header("x-3scale-service-key", "123456789");
-        // self.add_http_request_header("x-3scale-application-key", "987654321");
-        trace!("Metadata filter intercepted the HTTP request");
-        Action::Continue
-    }
-
-    fn on_http_response_headers(&mut self, _: usize) -> Action {
-        for (name, value) in &self.get_http_response_headers() {
-            trace!("#{} <- {}: {}", self.context_id, name, value);
+        for (name, value) in &self.get_http_request_headers() {
+            info!("#{} -> {}: {}", self.context_id, name, value);
         }
+        info!("Metadata filter intercepted the HTTP request");
+        let service_key_utf8 = self
+            .get_property(vec!["metadata", "filter_metadata", "3scale", "service_key"])
+            .unwrap();
+        let service_key = match str::from_utf8(&service_key_utf8) {
+            Ok(sk) => sk,
+            Err(e) => panic!("Error : {}", e),
+        };
+        let application_key_utf8 = self
+            .get_property(vec![
+                "metadata",
+                "filter_metadata",
+                "3scale",
+                "application_key",
+            ])
+            .unwrap();
+        let application_key = match str::from_utf8(&application_key_utf8) {
+            Ok(ak) => ak,
+            Err(e) => panic!("Error: {}", e),
+        };
+        info!("service key from dynamic metadata: {}", service_key);
+        info!("application key from dynamic metadata: {}", application_key);
         Action::Continue
     }
 
     fn on_log(&mut self) {
-        trace!("#{} completed.", self.context_id);
+        info!("#{} completed.", self.context_id);
     }
 }

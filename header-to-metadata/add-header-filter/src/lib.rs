@@ -1,10 +1,10 @@
-use log::trace;
+use log::info;
 use proxy_wasm::traits::*;
 use proxy_wasm::types::*;
 
 #[no_mangle]
 pub fn _start() {
-    proxy_wasm::set_log_level(LogLevel::Trace);
+    proxy_wasm::set_log_level(LogLevel::Info);
     proxy_wasm::set_root_context(|_| -> Box<dyn RootContext> { Box::new(HttpHeadersRoot) });
 }
 
@@ -30,20 +30,14 @@ impl Context for HttpHeaders {}
 
 impl HttpContext for HttpHeaders {
     fn on_http_request_headers(&mut self, _: usize) -> Action {
+        // Add metadata headers. These metadata headers will be added as dynamic metadata from the header to metadata filter.
         self.add_http_request_header("x-3scale-service-key", "123456789");
         self.add_http_request_header("x-3scale-application-key", "987654321");
-        trace!("3scale metadata headers added from the request path");
-        Action::Continue
-    }
-
-    fn on_http_response_headers(&mut self, _: usize) -> Action {
-        for (name, value) in &self.get_http_response_headers() {
-            trace!("#{} <- {}: {}", self.context_id, name, value);
-        }
+        info!("3scale metadata headers added from the request path");
         Action::Continue
     }
 
     fn on_log(&mut self) {
-        trace!("#{} completed.", self.context_id);
+        info!("#{} completed.", self.context_id);
     }
 }
