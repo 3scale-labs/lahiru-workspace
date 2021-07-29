@@ -1,0 +1,54 @@
+version: '3.7'
+services:
+  envoy:
+    image: envoyproxy/envoy:v1.19.0
+    container_name: envoy 
+    networks: 
+      - envoymesh
+    volumes: 
+      - "./envoy.yaml:/etc/envoy/envoy.yaml"
+    command: envoy -c /etc/envoy/envoy.yaml --service-cluster envoyproxy
+    ports:
+      - "9095:9095"
+      - "9000:9000"
+    environment: 
+      - SERVICE_NAME=1
+
+  backend-service:
+    image: solsson/http-echo
+    networks:
+      - envoymesh
+    environment:
+      - PORT=8000
+
+  prometheus:
+    image: prom/prometheus:v2.28.1
+    container_name: prometheus
+    networks: 
+      - envoymesh
+    volumes: 
+      - "./prometheus.yaml:/etc/prometheus/prometheus.yml"
+    ports: 
+      - "9090:9090"
+
+  grafana: 
+    image: grafana/grafana:8.0.6
+    networks: 
+      - envoymesh
+    ports: 
+      - "3000:3000"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.24
+    container_name: jaeger
+    networks: 
+      - envoymesh
+    ports: 
+      - "9411:9411"
+      - "16686:16686"
+      - "5775:5775/udp"
+    environment: 
+      - COLLECTOR_ZIPKIN_HOST_PORT=9411
+
+networks:
+  envoymesh: {}
